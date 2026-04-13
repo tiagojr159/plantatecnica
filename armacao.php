@@ -24,6 +24,7 @@ declare(strict_types=1);
                 <div class="top-nav__more">
                     <button type="button" class="nav-link top-nav__more-btn" aria-haspopup="menu" aria-expanded="false">Mais</button>
                     <div class="top-nav__more-menu" role="menu" aria-label="Mais opcoes">
+                        <a class="nav-link" role="menuitem" data-page="armacao-02" href="armacao-02.php">Planta de amarracao 3D</a>
                         <a class="nav-link" role="menuitem" data-page="projetos-salvos" href="projetos-salvos.php">Projetos salvos</a>
                         <a class="nav-link" role="menuitem" data-page="salvar-plantas" href="salvar-plantas.php">Imprimir plantas</a>
                     </div>
@@ -145,6 +146,7 @@ declare(strict_types=1);
                                         <option value="300">300%</option>
                                         <option value="800">800%</option>
                                         <option value="1500">1500%</option>
+                                        <option value="3000">3000%</option>
                                     </select>
                                     <button id="riggingFullscreenBtn" type="button" class="secondary-btn" aria-pressed="false" title="Abrir em tela inteira">Tela inteira</button>
                                 </div>
@@ -305,4 +307,9 @@ declare(strict_types=1);
     <script src="assets/armacao.js" defer></script>
 </body>
 </html>
+
+
+
+
+
 

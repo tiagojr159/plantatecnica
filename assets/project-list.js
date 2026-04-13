@@ -46,8 +46,8 @@ function renderOverviewProjects(projects) {
         const stats = project.stats || {};
         const projectId = escapeHtml(project.id || '');
         const editor = String(project.editor || 'technical');
-        const editorLabel = editor === 'terrain' ? 'Terreno' : editor === 'rigging' ? 'Armacao' : 'Tecnica';
-        const targetPage = editor === 'terrain' ? 'terreno.php' : editor === 'rigging' ? 'armacao.php' : 'index.php';
+        const editorLabel = editor === 'terrain' ? 'Terreno' : editor === 'rigging2' ? 'Amarracao 3D' : editor === 'rigging' ? 'Armacao' : 'Tecnica';
+        const targetPage = editor === 'terrain' ? 'terreno.php' : editor === 'rigging2' ? 'armacao-02.php' : editor === 'rigging' ? 'armacao.php' : 'index.php';
         card.innerHTML = `
             <strong>${escapeHtml(project.name || 'Projeto sem nome')}</strong>
             <span>${escapeHtml(formatProjectDate(project.updatedAt))}</span>
@@ -106,4 +106,6 @@ function escapeHtml(value) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+
 

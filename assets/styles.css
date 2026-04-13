@@ -1876,3 +1876,65 @@ body.rigging-layout.rigging-edit-collapsed .rigging-main-column {
     grid-column: auto;
 }
 
+
+.rigging2-workspace-hidden {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.rigging-panel-card--unified {
+    min-height: 720px;
+}
+
+.rigging-preview-wrap--unified {
+    position: relative;
+    min-height: 720px;
+}
+
+.rigging-preview--unified {
+    min-height: 640px;
+}
+
+.rigging2-hidden-field {
+    display: none;
+}
+
+body.rigging-layout--unified.rigging2-library-collapsed .app-shell {
+    grid-template-columns: 0 minmax(0, 1fr) 340px;
+}
+
+body.rigging-layout--unified.rigging2-edit-collapsed .app-shell {
+    grid-template-columns: 320px minmax(0, 1fr) 0;
+}
+
+body.rigging-layout--unified.rigging2-library-collapsed.rigging2-edit-collapsed .app-shell {
+    grid-template-columns: 0 minmax(0, 1fr) 0;
+}
+
+body.rigging-layout--unified.rigging2-library-collapsed #rigging2LibrarySidebar,
+body.rigging-layout--unified.rigging2-edit-collapsed #rigging2EditSidebar {
+    width: 0;
+    min-width: 0;
+    opacity: 0;
+    pointer-events: none;
+    overflow: hidden;
+    transform: scaleX(0.98);
+}
+
+#rigging2PreviewWrap:fullscreen,
+#rigging2PreviewWrap:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+#rigging2PreviewWrap:fullscreen .rigging-preview,
+#rigging2PreviewWrap:-webkit-full-screen .rigging-preview {
+    flex: 1 1 auto;
+    min-height: 0;
+}

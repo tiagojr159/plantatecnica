@@ -128,7 +128,7 @@ function formatManagerDate(value) {
 }
 
 function formatManagerEditor(editor) {
-    return editor === 'terrain' ? 'Terreno' : editor === 'rigging' ? 'Armacao' : 'Tecnica';
+    return editor === 'terrain' ? 'Terreno' : editor === 'rigging2' ? 'Amarracao 3D' : editor === 'rigging' ? 'Armacao' : 'Tecnica';
 }
 
 function escapeManagerHtml(value) {
@@ -139,3 +139,5 @@ function escapeManagerHtml(value) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
 }
+
+

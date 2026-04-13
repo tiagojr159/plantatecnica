@@ -15,7 +15,7 @@ declare(strict_types=1);
             <div class="top-nav__brand">
                 <p class="eyebrow">Grid Builder</p>
                 <h1>Imprimir plantas</h1>
-                <span>Monte a prancha e salve a planta tecnica, a planta do terreno, a armacao 3D ou a combinacao delas em PDF.</span>
+                <span>Monte a prancha e salve a planta tecnica, a planta do terreno, a armacao 3D, a amarracao 3D ou a combinacao delas em PDF.</span>
             </div>
             <nav class="top-nav__menu" aria-label="Navegacao principal">
                 <a class="nav-link" data-page="tecnica" href="index.php">Planta tecnica</a>
@@ -24,6 +24,7 @@ declare(strict_types=1);
                 <div class="top-nav__more">
                     <button type="button" class="nav-link top-nav__more-btn" aria-haspopup="menu" aria-expanded="false">Mais</button>
                     <div class="top-nav__more-menu" role="menu" aria-label="Mais opcoes">
+                        <a class="nav-link" role="menuitem" data-page="armacao-02" href="armacao-02.php">Planta de amarracao 3D</a>
                         <a class="nav-link" role="menuitem" data-page="projetos-salvos" href="projetos-salvos.php">Projetos salvos</a>
                         <a class="nav-link" role="menuitem" data-page="salvar-plantas" href="salvar-plantas.php">Imprimir plantas</a>
                     </div>
@@ -54,6 +55,10 @@ declare(strict_types=1);
                         <label class="field">
                             <span>Planta de armacao</span>
                             <select id="pdfRiggingProject"></select>
+                        </label>
+                        <label class="field">
+                            <span>Planta de amarracao 3D</span>
+                            <select id="pdfRigging3dProject"></select>
                         </label>
                     </div>
                 </section>
@@ -145,6 +150,15 @@ declare(strict_types=1);
                                         <canvas id="pdfRiggingCanvas" class="export-rigging-canvas" width="900" height="320"></canvas>
                                     </div>
                                 </section>
+                                <section id="pdfRigging3dSection" class="export-section" hidden>
+                                    <div class="export-section__header">
+                                        <strong>Planta de amarracao 3D</strong>
+                                        <span id="pdfRigging3dMeta"></span>
+                                    </div>
+                                    <div id="pdfRigging3dCanvasWrap" class="export-canvas export-canvas--rigging">
+                                        <canvas id="pdfRigging3dCanvas" class="export-rigging-canvas" width="900" height="320"></canvas>
+                                    </div>
+                                </section>
                                 <div id="pdfEmptyState" class="export-empty-state">
                                     Selecione pelo menos uma planta para montar a prancha do PDF.
                                 </div>
@@ -200,3 +214,7 @@ declare(strict_types=1);
     <script src="assets/pdf-export.js" defer></script>
 </body>
 </html>
+
+
+
+

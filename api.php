@@ -298,6 +298,7 @@ function sanitizeEditor(string $editor): string
     return match ($editor) {
         'terrain' => 'terrain',
         'rigging' => 'rigging',
+        'rigging2' => 'rigging2',
         default => 'technical',
     };
 }
