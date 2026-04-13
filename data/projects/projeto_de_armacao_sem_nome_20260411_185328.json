@@ -1,0 +1,101 @@
+{
+    "id": "projeto_de_armacao_sem_nome_20260411_185328",
+    "editor": "rigging",
+    "name": "Projeto de armacao sem nome",
+    "createdAt": "2026-04-11T18:53:28+02:00",
+    "updatedAt": "2026-04-11T18:53:28+02:00",
+    "canvas": {
+        "widthM": 20,
+        "heightM": 12
+    },
+    "view": {
+        "showDimensions": false,
+        "showNames": false,
+        "showDepth": true
+    },
+    "items": [
+        {
+            "id": "rig_1775925172115_0cecb1",
+            "componentId": "escada_1m",
+            "name": "Escada frontal 1 m",
+            "image": "images/escada_1m.png",
+            "widthM": 1,
+            "heightM": 1,
+            "depthM": 0.18,
+            "x": 1.8,
+            "y": 6.2,
+            "z": 0,
+            "zIndex": 1,
+            "rotationDeg": 0,
+            "rotationXDeg": 0,
+            "rotationYDeg": 0,
+            "rotationZDeg": 0,
+            "color": "#A45C44"
+        },
+        {
+            "id": "rig_1775925188508_549ebf",
+            "componentId": "escada_1m",
+            "name": "Escada frontal 1 m",
+            "image": "images/escada_1m.png",
+            "widthM": 1,
+            "heightM": 1,
+            "depthM": 0.18,
+            "x": 2.9,
+            "y": 6.2,
+            "z": 0,
+            "zIndex": 2,
+            "rotationDeg": 0,
+            "rotationXDeg": 0,
+            "rotationYDeg": 0,
+            "rotationZDeg": 0,
+            "color": "#A45C44"
+        },
+        {
+            "id": "rig_1775925240427_be108b",
+            "componentId": "cubo_30cm",
+            "name": "Cubo 30 cm",
+            "image": "images/cubo_30cm.png",
+            "widthM": 0.3,
+            "heightM": 0.3,
+            "depthM": 0.04,
+            "x": 2.3,
+            "y": 8.7,
+            "z": 0,
+            "zIndex": 5,
+            "rotationDeg": 0,
+            "rotationXDeg": 0,
+            "rotationYDeg": 0,
+            "rotationZDeg": 0,
+            "color": "#4C5E73"
+        },
+        {
+            "id": "rig_1775926060903_5d5800",
+            "componentId": "grid_3m",
+            "name": "Grid vertical 3 m",
+            "image": "images/grid_3m.png",
+            "widthM": 0.3,
+            "heightM": 3,
+            "depthM": 0.05,
+            "x": 4,
+            "y": 4.2,
+            "z": 0,
+            "zIndex": 6,
+            "rotationDeg": 0,
+            "rotationXDeg": 0,
+            "rotationYDeg": 0,
+            "rotationZDeg": 0,
+            "color": "#2F3A48"
+        }
+    ],
+    "stats": {
+        "minX": 1.8,
+        "minY": 4.2,
+        "maxX": 4.3,
+        "maxY": 9,
+        "minZ": 0,
+        "maxZ": 0.18,
+        "widthM": 2.5,
+        "heightM": 4.8,
+        "depthM": 0.18
+    }
+}

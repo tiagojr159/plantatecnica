@@ -1,0 +1,61 @@
+{
+    "id": "projeto_do_terreno_sem_nome_20260329_234419",
+    "editor": "terrain",
+    "name": "Projeto do terreno sem nome",
+    "createdAt": "",
+    "updatedAt": "2026-03-29T23:44:19+02:00",
+    "canvas": {
+        "widthM": 40,
+        "heightM": 20
+    },
+    "view": {
+        "showDimensions": true,
+        "showNames": false
+    },
+    "items": [
+        {
+            "id": "terrain-1774820245513-1d1a5c",
+            "componentId": "wall_2m",
+            "name": "PAREDE 2 m",
+            "image": "",
+            "widthM": 3,
+            "heightM": 0.2,
+            "x": 11.4,
+            "y": 9.9,
+            "zIndex": 18,
+            "rotationDeg": 21.2
+        },
+        {
+            "id": "terrain-1774820410293-8d8bfd",
+            "componentId": "stage",
+            "name": "PALCO",
+            "image": "",
+            "widthM": 10,
+            "heightM": 6,
+            "x": 2.4,
+            "y": 2.7,
+            "zIndex": 13,
+            "rotationDeg": 19.18
+        },
+        {
+            "id": "terrain-1774820465404-b67994",
+            "componentId": "stair",
+            "name": "ESCADA",
+            "image": "",
+            "widthM": 1.8,
+            "heightM": 2,
+            "x": 8.2,
+            "y": 0.9,
+            "zIndex": 21,
+            "rotationDeg": 19.6
+        }
+    ],
+    "stats": {
+        "minX": 1.69,
+        "minY": 0.66,
+        "maxX": 14.33,
+        "maxY": 10.64,
+        "widthM": 12.64,
+        "heightM": 9.98
+    }
+}

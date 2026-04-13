@@ -1,0 +1,35 @@
+{
+    "id": "outro_20260328_162233",
+    "name": "outro",
+    "createdAt": "2026-03-28T16:22:33+01:00",
+    "updatedAt": "2026-03-28T16:22:33+01:00",
+    "canvas": {
+        "widthM": 20,
+        "heightM": 8
+    },
+    "view": {
+        "showDimensions": true,
+        "showNames": true
+    },
+    "items": [
+        {
+            "id": "item_1774711346159_19e2b0",
+            "componentId": "cubo_30cm",
+            "name": "Cubo 30 cm",
+            "image": "images/cubo_30cm.png",
+            "widthM": 0.3,
+            "heightM": 0.3,
+            "x": 7.5,
+            "y": 4.8,
+            "zIndex": 2
+        }
+    ],
+    "stats": {
+        "minX": 7.5,
+        "minY": 4.8,
+        "maxX": 7.8,
+        "maxY": 5.1,
+        "widthM": 0.3,
+        "heightM": 0.3
+    }
+}

@@ -1,0 +1,181 @@
+{
+    "id": "projeto_sem_nome_20260328_162151",
+    "editor": "technical",
+    "name": "paixao de cristo",
+    "createdAt": "2026-03-28T16:21:51+01:00",
+    "updatedAt": "2026-04-11T17:26:18+02:00",
+    "canvas": {
+        "widthM": 50,
+        "heightM": 8
+    },
+    "view": {
+        "showDimensions": true,
+        "showNames": false
+    },
+    "items": [
+        {
+            "id": "item_1774711090082_28831f",
+            "componentId": "piso_120cmx220cm",
+            "name": "Piso 1,20 x 2,20 m",
+            "image": "images/piso_120cmX220cm.png",
+            "widthM": 9.7,
+            "heightM": 1.2,
+            "x": 2.6,
+            "y": 0.6,
+            "zIndex": 150,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711104434_d44e95",
+            "componentId": "grid_3m",
+            "name": "Grid vertical 3 m",
+            "image": "images/grid_3m.png",
+            "widthM": 0.3,
+            "heightM": 3,
+            "x": 2.9,
+            "y": 1.8,
+            "zIndex": 133,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711108360_82eb08",
+            "componentId": "grid_3m",
+            "name": "Grid vertical 3 m",
+            "image": "images/grid_3m.png",
+            "widthM": 0.3,
+            "heightM": 3,
+            "x": 11.7,
+            "y": 1.8,
+            "zIndex": 109,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711111728_38fe4d",
+            "componentId": "grid_lateral_2m",
+            "name": "Grid horizontal 2 m",
+            "image": "images/grid_lateral_2m.png",
+            "widthM": 4,
+            "heightM": 0.3,
+            "x": 7.7,
+            "y": 4.8,
+            "zIndex": 108,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711114915_da4338",
+            "componentId": "grid_lateral_2m",
+            "name": "Grid horizontal 2 m",
+            "image": "images/grid_lateral_2m.png",
+            "widthM": 4,
+            "heightM": 0.3,
+            "x": 3.2,
+            "y": 4.8,
+            "zIndex": 132,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711117534_91f63c",
+            "componentId": "grid_lateral_2m",
+            "name": "Grid horizontal 2 m",
+            "image": "images/grid_lateral_2m.png",
+            "widthM": 0.5,
+            "heightM": 0.3,
+            "x": 7.2,
+            "y": 4.8,
+            "zIndex": 130,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711122498_2aa3de",
+            "componentId": "cubo_30cm",
+            "name": "Cubo 30 cm",
+            "image": "images/cubo_30cm.png",
+            "widthM": 0.3,
+            "heightM": 0.3,
+            "x": 9.3,
+            "y": 6.2,
+            "zIndex": 120,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711124872_907260",
+            "componentId": "cubo_30cm",
+            "name": "Cubo 30 cm",
+            "image": "images/cubo_30cm.png",
+            "widthM": 0.3,
+            "heightM": 0.3,
+            "x": 11.7,
+            "y": 4.8,
+            "zIndex": 110,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711145681_d2fba9",
+            "componentId": "escada_1m",
+            "name": "Escada frontal 1 m",
+            "image": "images/escada_1m.png",
+            "widthM": 1,
+            "heightM": 1,
+            "x": 5.4,
+            "y": 2.5,
+            "zIndex": 141,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711161731_754600",
+            "componentId": "escada_lateral_1m",
+            "name": "Escada lateral 1 m",
+            "image": "images/escada_lateral_1m.png",
+            "widthM": 1,
+            "heightM": 1,
+            "x": 1.6,
+            "y": 0.6,
+            "zIndex": 41,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711391896_a55d36",
+            "componentId": "fechamento_3mx2_5m",
+            "name": "Fechamento 3,0 x 2,5 m",
+            "image": "images/fechamento_3mx2%2C5m.png",
+            "widthM": 3,
+            "heightM": 2.5,
+            "x": 14.3,
+            "y": 0.8,
+            "zIndex": 85,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774711518454_60ff94",
+            "componentId": "fechamento_3mx2_5m",
+            "name": "Fechamento 3,0 x 2,5 m",
+            "image": "images/fechamento_3mx2%2C5m.png",
+            "widthM": 3,
+            "heightM": 2.5,
+            "x": 16.3,
+            "y": 1.2,
+            "zIndex": 67,
+            "rotationDeg": 0
+        },
+        {
+            "id": "item_1774882428685_e4d233",
+            "componentId": "cubo_30cm",
+            "name": "Cubo 30 cm",
+            "image": "images/cubo_30cm.png",
+            "widthM": 0.3,
+            "heightM": 0.3,
+            "x": 2.9,
+            "y": 4.8,
+            "zIndex": 136,
+            "rotationDeg": 0
+        }
+    ],
+    "stats": {
+        "minX": 1.6,
+        "minY": 0.6,
+        "maxX": 19.3,
+        "maxY": 6.5,
+        "widthM": 17.7,
+        "heightM": 5.9
+    }
+}
