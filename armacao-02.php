@@ -51,6 +51,12 @@ declare(strict_types=1);
 
             <main class="main-column rigging-main-column">
                 <section class="panel toolbar-panel">
+                    <div class="panel-heading panel-heading--toolbar">
+                        <div>
+                            <p class="eyebrow">Projeto</p>
+                            <h2>Monte a amarracao 3D, ajuste a base e salve os projetos.</h2>
+                        </div>
+                    </div>
                     <div class="toolbar-row">
                         <div class="toolbar-group toolbar-group--grow">
                             <label class="field">
@@ -252,6 +258,10 @@ declare(strict_types=1);
                         <div class="action-row action-row--compact rigging2-hidden-field">
                             <button id="rigging2RotateLeftBtn" type="button" class="secondary-btn">Girar -15deg</button>
                             <button id="rigging2RotateRightBtn" type="button" class="secondary-btn">Girar +15deg</button>
+                        </div>
+                        <div class="action-row action-row--compact">
+                            <button id="rigging2InvertBtn" type="button" class="secondary-btn">Inverter peca</button>
+                            <button id="rigging2Rotate30Btn" type="button" class="secondary-btn">Girar 30deg</button>
                         </div>
                         <div class="action-row">
                             <button id="rigging2DuplicateBtn" type="button" class="secondary-btn">Duplicar</button>

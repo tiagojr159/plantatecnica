@@ -263,23 +263,59 @@
 
         items.filter((it) => Number(it.widthM) > 0 && Number(it.heightM) > 0).forEach((it) => {
             const node = document.createElement('div');
+            node.className = 'export-tech-item';
+            const itemWidthPx = Number(it.widthM || 0) * scale;
+            const itemHeightPx = Number(it.heightM || 0) * scale;
+            const annotation = getExportAnnotationMetrics(itemWidthPx, itemHeightPx, scale);
             node.style.position = 'absolute';
             node.style.left = Math.round((Number(it.x || 0) - offsetX) * scale) + 'px';
             node.style.top = Math.round((heightM + paddingM * 2 - (Number(it.y || 0) - offsetY) - Number(it.heightM || 0)) * scale) + 'px';
-            node.style.width = Math.round(Number(it.widthM || 0) * scale) + 'px';
-            node.style.height = Math.round(Number(it.heightM || 0) * scale) + 'px';
-            node.style.borderRadius = '10px';
-            node.style.background = 'rgba(37,99,235,0.10)';
-            node.style.border = '1px solid rgba(37,99,235,0.35)';
+            node.style.width = Math.round(itemWidthPx) + 'px';
+            node.style.height = Math.round(itemHeightPx) + 'px';
+            node.style.transform = `rotate(${Number(it.rotationDeg || 0)}deg)`;
+            node.style.setProperty('--export-label-font', `${annotation.nameFont}px`);
+            node.style.setProperty('--export-badge-font', `${annotation.dimensionFont}px`);
+            node.style.setProperty('--export-badge-pad-y', `${annotation.badgePadY}px`);
+            node.style.setProperty('--export-badge-pad-x', `${annotation.badgePadX}px`);
+            node.style.setProperty('--export-badge-offset', `${annotation.offset}px`);
+            node.style.setProperty('--export-title-offset', `${annotation.titleOffset}px`);
+            node.style.setProperty('--export-title-max-width', `${Math.max(24, itemWidthPx * 1.8)}px`);
             if (it.image) {
                 const img = document.createElement('img');
                 img.src = String(it.image);
                 img.alt = String(it.name || '');
-                img.style.width = '100%';
-                img.style.height = '100%';
-                img.style.objectFit = 'fill';
-                img.style.opacity = '0.9';
+                if (it.flipX) {
+                    img.style.transform = 'scaleX(-1)';
+                }
                 node.appendChild(img);
+            } else {
+                node.style.borderRadius = '6px';
+                node.style.border = '1px solid rgba(30, 41, 59, 0.35)';
+                node.style.background = 'rgba(255,255,255,0.96)';
+            }
+
+            if (it.name) {
+                const title = document.createElement('span');
+                title.className = 'item-title';
+                title.textContent = String(it.name);
+                node.appendChild(title);
+            }
+
+            const widthBadge = document.createElement('span');
+            widthBadge.className = 'dimension-badge dimension-badge--width';
+            widthBadge.textContent = `L ${formatMeters(Number(it.widthM || 0))}`;
+            node.appendChild(widthBadge);
+
+            const heightBadge = document.createElement('span');
+            heightBadge.className = 'dimension-badge dimension-badge--height';
+            heightBadge.textContent = `A ${formatMeters(Number(it.heightM || 0))}`;
+            node.appendChild(heightBadge);
+
+            if (!it.image) {
+                const fallbackName = document.createElement('span');
+                fallbackName.className = 'export-tech-fallback';
+                fallbackName.textContent = String(it.componentId || 'PEC A');
+                node.appendChild(fallbackName);
             }
             scene.appendChild(node);
         });
@@ -300,8 +336,10 @@
         el.terrainSection.hidden = false;
         const items = Array.isArray(project.items) ? project.items : [];
         const bounds = calculateBounds(items);
-        const width = Math.max(bounds.widthM || Number(project.canvas?.widthM || 0), 6);
-        const height = Math.max(bounds.heightM || Number(project.canvas?.heightM || 0), 4);
+        const canvasWidthM = Number(project.canvas?.widthM || 0);
+        const canvasHeightM = Number(project.canvas?.heightM || 0);
+        const width = Math.max(canvasWidthM, bounds.widthM || 0, 6);
+        const height = Math.max(canvasHeightM, bounds.heightM || 0, 4);
 
         const viewW = Math.max(640, el.terrainCanvas.clientWidth || 900);
         const viewH = Math.max(220, el.terrainCanvas.clientHeight || 320);
@@ -309,8 +347,8 @@
 
         const padding = 30;
         const scale = Math.max(10, Math.min((viewW - padding * 2) / width, (viewH - padding * 2) / height));
-        const offsetX = (bounds.widthM > 0 ? bounds.minX : 0);
-        const offsetY = (bounds.heightM > 0 ? bounds.minY : 0);
+        const offsetX = canvasWidthM > 0 ? 0 : (bounds.widthM > 0 ? bounds.minX : 0);
+        const offsetY = canvasHeightM > 0 ? 0 : (bounds.heightM > 0 ? bounds.minY : 0);
 
         const group = svg('g');
         items.filter((it) => Number(it.widthM) > 0 && Number(it.heightM) > 0).forEach((it) => {
@@ -318,11 +356,129 @@
             const y = padding + (Number(it.y || 0) - offsetY) * scale;
             const w = Number(it.widthM || 0) * scale;
             const h = Number(it.heightM || 0) * scale;
-            const rect = svg('rect', { x, y, width: w, height: h, rx: 10, ry: 10, fill: 'rgba(59,130,246,0.08)', stroke: 'rgba(59,130,246,0.35)' });
-            group.appendChild(rect);
+            const itemGroup = svg('g', { transform: `translate(${x} ${y}) rotate(${Number(it.rotationDeg || 0)} ${w / 2} ${h / 2})` });
+            const shapeGroup = svg('g', it.flipX ? { transform: `translate(${w} 0) scale(-1 1)` } : {});
+            drawTerrainExportShape(shapeGroup, it, w, h);
+            itemGroup.appendChild(shapeGroup);
+            const annotation = getExportAnnotationMetrics(w, h, scale);
+            if (it.name) {
+                itemGroup.appendChild(svgText(String(it.name), {
+                    x: w / 2,
+                    y: -annotation.titleOffset,
+                    class: 'terrain-label export-terrain-label',
+                    'font-size': annotation.nameFont,
+                }));
+            }
+            itemGroup.appendChild(createTerrainExportDimensions(it, w, h, annotation));
+            group.appendChild(itemGroup);
         });
         el.terrainSvg.appendChild(group);
         el.terrainMeta.textContent = (project.name || 'Projeto sem nome') + ' | ' + items.length + ' itens | ' + formatMeters(bounds.widthM) + ' x ' + formatMeters(bounds.heightM);
+    }
+
+    function drawTerrainExportShape(group, item, widthPx, heightPx) {
+        const type = String(item.componentId || '');
+        if (type === 'stage' || type === 'main_stage') {
+            group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 4, ry: 4, class: 'terrain-shape-base' }));
+            return;
+        }
+        if (type === 'stair') {
+            const stepCount = clamp(Math.round(heightPx / 18), 4, 7);
+            const stepHeight = heightPx / stepCount;
+            group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 4, ry: 4, class: 'terrain-shape-base terrain-shape-fill-muted' }));
+            group.appendChild(svg('line', { x1: widthPx * 0.78, y1: 0, x2: widthPx * 0.78, y2: heightPx, class: 'terrain-shape-line' }));
+            for (let index = 1; index < stepCount; index += 1) {
+                const y = stepHeight * index;
+                group.appendChild(svg('line', { x1: 0, y1: y, x2: widthPx, y2: y, class: 'terrain-shape-line' }));
+            }
+            return;
+        }
+        if (type === 'ramp') {
+            const bandY = heightPx * 0.48;
+            const arrowY = heightPx * 0.74;
+            group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 4, ry: 4, class: 'terrain-shape-base' }));
+            group.appendChild(svg('line', { x1: 0, y1: bandY, x2: widthPx, y2: bandY, class: 'terrain-shape-line' }));
+            group.appendChild(svgText('INC. 30%', { x: widthPx / 2, y: heightPx * 0.26, class: 'terrain-inner-text' }));
+            group.appendChild(svg('line', { x1: widthPx * 0.18, y1: arrowY, x2: widthPx * 0.68, y2: arrowY, class: 'terrain-shape-line' }));
+            group.appendChild(svg('polyline', { points: `${widthPx * 0.57},${arrowY - heightPx * 0.12} ${widthPx * 0.73},${arrowY} ${widthPx * 0.57},${arrowY + heightPx * 0.12}`, class: 'terrain-shape-line' }));
+            return;
+        }
+        if (type === 'landing') {
+            group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 4, ry: 4, class: 'terrain-shape-base terrain-shape-fill-muted' }));
+            group.appendChild(svg('line', { x1: widthPx / 3, y1: 0, x2: widthPx / 3, y2: heightPx, class: 'terrain-shape-line' }));
+            group.appendChild(svg('line', { x1: (widthPx / 3) * 2, y1: 0, x2: (widthPx / 3) * 2, y2: heightPx, class: 'terrain-shape-line' }));
+            return;
+        }
+        if (type === 'screen_tower') {
+            group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 4, ry: 4, class: 'terrain-shape-base' }));
+            group.appendChild(svg('line', { x1: 0, y1: heightPx * 0.52, x2: widthPx, y2: heightPx * 0.52, class: 'terrain-shape-line terrain-shape-line--heavy' }));
+            group.appendChild(svg('line', { x1: widthPx * 0.12, y1: 0, x2: widthPx * 0.12, y2: heightPx, class: 'terrain-shape-line' }));
+            group.appendChild(svg('line', { x1: widthPx * 0.88, y1: 0, x2: widthPx * 0.88, y2: heightPx, class: 'terrain-shape-line' }));
+            return;
+        }
+        if (type === 'connector') {
+            group.appendChild(svg('rect', { x: 0, y: heightPx * 0.35, width: widthPx, height: Math.max(4, heightPx * 0.3), rx: 1, ry: 1, class: 'terrain-connector-base' }));
+            group.appendChild(svg('line', { x1: 0, y1: heightPx * 0.35, x2: widthPx, y2: heightPx * 0.35, class: 'terrain-shape-line' }));
+            group.appendChild(svg('line', { x1: 0, y1: heightPx * 0.65, x2: widthPx, y2: heightPx * 0.65, class: 'terrain-shape-line' }));
+            return;
+        }
+        if (type === 'dimension_line') {
+            const y = heightPx / 2;
+            group.appendChild(svg('line', { x1: 0, y1: y, x2: widthPx, y2: y, class: 'terrain-dimension-guide' }));
+            group.appendChild(svg('line', { x1: 0, y1: y - 8, x2: 0, y2: y + 8, class: 'terrain-dimension-guide' }));
+            group.appendChild(svg('line', { x1: widthPx, y1: y - 8, x2: widthPx, y2: y + 8, class: 'terrain-dimension-guide' }));
+            return;
+        }
+
+        group.appendChild(svg('rect', { x: 0, y: 0, width: widthPx, height: heightPx, rx: 3, ry: 3, class: 'terrain-wall-base' }));
+        const patternCount = Math.max(2, Math.round(widthPx / 26));
+        for (let index = 1; index < patternCount; index += 1) {
+            const x = (widthPx / patternCount) * index;
+            group.appendChild(svg('line', { x1: x, y1: 0, x2: x - 10, y2: heightPx, class: 'terrain-wall-line' }));
+        }
+    }
+
+    function createTerrainExportDimensions(item, widthPx, heightPx, annotation) {
+        const group = svg('g');
+        if (String(item.componentId || '') === 'dimension_line') {
+            return group;
+        }
+        const offset = annotation.offset;
+        const tick = Math.max(2, annotation.offset * 0.45);
+        const verticalX = widthPx + offset;
+        group.appendChild(svg('line', { x1: 0, y1: heightPx, x2: 0, y2: heightPx + offset, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: widthPx, y1: heightPx, x2: widthPx, y2: heightPx + offset, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: 0, y1: heightPx + offset, x2: widthPx, y2: heightPx + offset, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: 0, y1: heightPx + offset - tick, x2: 0, y2: heightPx + offset + tick, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: widthPx, y1: heightPx + offset - tick, x2: widthPx, y2: heightPx + offset + tick, class: 'terrain-dimension-line' }));
+        group.appendChild(svgText(formatMeters(Number(item.widthM || 0)), { x: widthPx / 2, y: heightPx + offset + annotation.dimensionFont * 0.35, class: 'terrain-dimension-text export-terrain-dimension', 'font-size': annotation.dimensionFont }));
+        group.appendChild(svg('line', { x1: widthPx, y1: 0, x2: verticalX, y2: 0, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: widthPx, y1: heightPx, x2: verticalX, y2: heightPx, class: 'terrain-dimension-line' }));
+        group.appendChild(svg('line', { x1: verticalX, y1: 0, x2: verticalX, y2: heightPx, class: 'terrain-dimension-line' }));
+        group.appendChild(svgText(formatMeters(Number(item.heightM || 0)), {
+            x: verticalX + offset,
+            y: heightPx / 2,
+            class: 'terrain-dimension-text export-terrain-dimension',
+            'font-size': annotation.dimensionFont,
+            transform: `rotate(90 ${verticalX + offset} ${heightPx / 2})`,
+        }));
+        return group;
+    }
+
+    function getExportAnnotationMetrics(widthPx, heightPx, scale) {
+        const shortestSide = Math.max(1, Math.min(Number(widthPx || 0), Number(heightPx || 0)));
+        const scaleFactor = clamp(Number(scale || 1) / 20, 0.35, 1);
+        const dimensionFont = roundTo(clamp(shortestSide * 0.42, 3, 8) * scaleFactor, 2);
+        const nameFont = roundTo(clamp(shortestSide * 0.34, 3, 8) * scaleFactor, 2);
+        const offset = roundTo(clamp(shortestSide * 0.65, 3, 10) * scaleFactor, 2);
+        return {
+            dimensionFont,
+            nameFont,
+            offset,
+            titleOffset: roundTo(offset + nameFont * 0.65, 2),
+            badgePadX: roundTo(clamp(dimensionFont * 0.55, 1, 4), 2),
+            badgePadY: roundTo(clamp(dimensionFont * 0.24, 0.5, 2), 2),
+        };
     }
 
     function renderRigging(section, wrap, canvas, meta, project, emptyMessage) {
@@ -628,6 +784,12 @@
         return node;
     }
 
+    function svgText(value, attrs = {}) {
+        const node = svg('text', attrs);
+        node.textContent = String(value || '');
+        return node;
+    }
+
     function setStatus(message, tone = 'info') {
         el.status.textContent = message;
         el.status.className = `status-box status-box--${tone}`;
@@ -680,5 +842,9 @@
     function roundTo(value, decimals) {
         const factor = 10 ** decimals;
         return Math.round((Number(value || 0) + Number.EPSILON) * factor) / factor;
+    }
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(Number(value || 0), min), max);
     }
 })();

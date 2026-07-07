@@ -40,7 +40,7 @@ declare(strict_types=1);
                             <p class="eyebrow">Biblioteca</p>
                             <h2>Componentes do terreno</h2>
                         </div>
-                        <p class="panel-help">Escolha um bloco de palco, escada, rampa, parede ou patamar e monte a planta na area central.</p>
+                        <p class="panel-help">Escolha um bloco de palco.</p>
                     </div>
                     <div id="terrainCatalog" class="catalog-list terrain-catalog-list"></div>
                 </section>
@@ -48,6 +48,12 @@ declare(strict_types=1);
 
             <main class="main-column">
                 <section class="panel toolbar-panel">
+                    <div class="panel-heading panel-heading--toolbar">
+                        <div>
+                            <p class="eyebrow">Projeto</p>
+                            <h2>Monte o terreno, ajuste a area e salve os projetos.</h2>
+                        </div>
+                    </div>
                     <div class="toolbar-row">
                         <div class="toolbar-group toolbar-group--grow">
                             <label class="field">
@@ -169,6 +175,10 @@ declare(strict_types=1);
                             <span>Rotacao (graus)</span>
                             <input id="terrainSelectedRotation" type="number" step="1" value="0">
                         </label>
+                        <div class="action-row action-row--compact">
+                            <button id="terrainInvertItem" type="button" class="secondary-btn">Inverter peca</button>
+                            <button id="terrainRotate30Item" type="button" class="secondary-btn">Girar 30deg</button>
+                        </div>
                         <div class="action-row">
                             <button id="terrainDuplicateItem" type="button" class="secondary-btn">Duplicar</button>
                             <button id="terrainDeleteItem" type="button" class="danger-btn">Remover</button>
@@ -213,8 +223,6 @@ declare(strict_types=1);
     <script src="assets/terrain.js" defer></script>
 </body>
 </html>
-
-
 
 
 

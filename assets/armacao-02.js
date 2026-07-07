@@ -59,7 +59,7 @@
             'rigging2NewBtn','rigging2SaveBtn','rigging2ApplyCanvas','rigging2ProjectList','rigging2Status','rigging2SelectionEmpty','rigging2SelectionForm',
             'rigging2SelectedName','rigging2SelectedWidth','rigging2SelectedHeight','rigging2SelectedDepth','rigging2SelectedX','rigging2SelectedY','rigging2WidthLabel','rigging2HeightLabel','rigging2DepthLabel','rigging2DimensionHint',
             'rigging2SelectedZ','rigging2SelectedMountMode','rigging2ZUp50','rigging2ZDown50','rigging2SelectedRotationX','rigging2SelectedRotationY','rigging2SelectedRotationZ','rigging2SelectedColor',
-            'rigging2DuplicateBtn','rigging2DeleteBtn','rigging2ViewIso','rigging2ViewFront','rigging2ViewSide','rigging2ViewTop',
+            'rigging2DuplicateBtn','rigging2DeleteBtn','rigging2InvertBtn','rigging2Rotate30Btn','rigging2ViewIso','rigging2ViewFront','rigging2ViewSide','rigging2ViewTop',
             'rigging2RotateLeftBtn','rigging2RotateRightBtn','rigging2LibraryToggle','rigging2EditToggle','rigging2LibraryDock','rigging2EditDock','rigging2ZoomPreset','rigging2PreviewWrap','rigging2FullscreenBtn'
         ].forEach((id) => { el[id] = document.getElementById(id); });
     }
@@ -98,6 +98,8 @@
         el.rigging2SelectedMountMode.addEventListener('change', () => updateSelected(true));
         el.rigging2DuplicateBtn.addEventListener('click', duplicateSelected);
         el.rigging2DeleteBtn.addEventListener('click', deleteSelected);
+        el.rigging2InvertBtn.addEventListener('click', () => rotateSelectedBy(180));
+        el.rigging2Rotate30Btn.addEventListener('click', () => rotateSelectedBy(30));
         el.rigging2RotateLeftBtn.addEventListener('click', () => rotateSelectedBy(-15));
         el.rigging2RotateRightBtn.addEventListener('click', () => rotateSelectedBy(15));
         el.rigging2ZUp50.addEventListener('click', () => nudgeSelectedZ(0.5));
@@ -1840,7 +1842,6 @@
         return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     }
 })();
-
 
 
 

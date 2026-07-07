@@ -6,6 +6,13 @@ $baseDir = __DIR__;
 $action = (string) ($_GET['action'] ?? '');
 $catalog = require $baseDir . DIRECTORY_SEPARATOR . 'data' . DIRECTORY_SEPARATOR . 'component-catalog.php';
 
+if (!function_exists('str_contains')) {
+    function str_contains(string $haystack, string $needle): bool
+    {
+        return $needle === '' || strpos($haystack, $needle) !== false;
+    }
+}
+
 try {
     switch ($action) {
         case 'components':
@@ -60,7 +67,7 @@ function handleListComponents(array $catalog, string $baseDir): void
         }
 
         $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
-        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif'], true)) {
+        if (!in_array($extension, ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg'], true)) {
             continue;
         }
 
@@ -268,6 +275,7 @@ function sanitizeItems(array $items, string $editor = 'technical'): array
         $x = max(0, round((float) ($item['x'] ?? 0), 2));
         $y = max(0, round((float) ($item['y'] ?? 0), 2));
         $rotationZDeg = round((float) ($item['rotationZDeg'] ?? $item['rotationDeg'] ?? 0), 2);
+        $flipX = filter_var($item['flipX'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? false;
 
         $cleanItems[] = [
             'id' => sanitizeItemId((string) ($item['id'] ?? uniqid('item_', true))),
@@ -286,6 +294,7 @@ function sanitizeItems(array $items, string $editor = 'technical'): array
             'rotationXDeg' => round((float) ($item['rotationXDeg'] ?? 0), 2),
             'rotationYDeg' => round((float) ($item['rotationYDeg'] ?? 0), 2),
             'rotationZDeg' => $rotationZDeg,
+            'flipX' => $flipX,
             'color' => sanitizeColor((string) ($item['color'] ?? defaultItemColor((string) ($item['componentId'] ?? '')))),
         ];
     }
@@ -295,12 +304,11 @@ function sanitizeItems(array $items, string $editor = 'technical'): array
 
 function sanitizeEditor(string $editor): string
 {
-    return match ($editor) {
-        'terrain' => 'terrain',
-        'rigging' => 'rigging',
-        'rigging2' => 'rigging2',
-        default => 'technical',
-    };
+    if ($editor === 'terrain' || $editor === 'rigging' || $editor === 'rigging2') {
+        return $editor;
+    }
+
+    return 'technical';
 }
 
 function sanitizeStats(array $stats): array
@@ -321,9 +329,9 @@ function sanitizeStats(array $stats): array
 function sanitizeViewSettings(array $view): array
 {
     return [
-        'showDimensions' => filter_var($view['showDimensions'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true,
-        'showNames' => filter_var($view['showNames'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true,
-        'showDepth' => filter_var($view['showDepth'] ?? true, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) ?? true,
+        'showDimensions' => filter_var($view['showDimensions'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
+        'showNames' => filter_var($view['showNames'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
+        'showDepth' => filter_var($view['showDepth'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? true,
     ];
 }
 
@@ -526,14 +534,23 @@ function inferCategory(string $filename): string
 {
     $lower = strtolower($filename);
 
-    return match (true) {
-        str_contains($lower, 'grid') => 'Grid',
-        str_contains($lower, 'piso') => 'Pisos',
-        str_contains($lower, 'escada') => 'Acessos',
-        str_contains($lower, 'cubo') => 'Estruturas',
-        str_contains($lower, 'fechamento') => 'Fechamentos',
-        default => 'Outros',
-    };
+    if (str_contains($lower, 'grid')) {
+        return 'Grid';
+    }
+    if (str_contains($lower, 'piso')) {
+        return 'Pisos';
+    }
+    if (str_contains($lower, 'escada') || str_contains($lower, 'rampa')) {
+        return 'Acessos';
+    }
+    if (str_contains($lower, 'cubo')) {
+        return 'Estruturas';
+    }
+    if (str_contains($lower, 'fechamento')) {
+        return 'Fechamentos';
+    }
+
+    return 'Outros';
 }
 
 function friendlyName(string $filename): string
@@ -674,23 +691,27 @@ function calculateRiggingGeometry(array $item): array
     $depthM = max(0, (float) ($item['depthM'] ?? inferDepthFromSize($widthM, $heightM)));
     $mountMode = sanitizeMountMode((string) ($item['mountMode'] ?? defaultMountMode((string) ($item['componentId'] ?? ''))));
 
-    return match ($mountMode) {
-        'wall_x' => [
+    if ($mountMode === 'wall_x') {
+        return [
             'footprintWidthM' => $widthM,
             'footprintHeightM' => $depthM,
             'verticalHeightM' => $heightM,
-        ],
-        'wall_y' => [
+        ];
+    }
+
+    if ($mountMode === 'wall_y') {
+        return [
             'footprintWidthM' => $depthM,
             'footprintHeightM' => $widthM,
             'verticalHeightM' => $heightM,
-        ],
-        default => [
-            'footprintWidthM' => $widthM,
-            'footprintHeightM' => $heightM,
-            'verticalHeightM' => $depthM,
-        ],
-    };
+        ];
+    }
+
+    return [
+        'footprintWidthM' => $widthM,
+        'footprintHeightM' => $heightM,
+        'verticalHeightM' => $depthM,
+    ];
 }
 
 function sanitizeColor(string $value): string
@@ -706,16 +727,19 @@ function sanitizeColor(string $value): string
 function defaultItemColor(string $componentId): string
 {
     $componentId = strtolower($componentId);
-    return match (true) {
-        str_contains($componentId, 'grid') => '#2F3A48',
-        str_contains($componentId, 'piso') => '#C8A88F',
-        str_contains($componentId, 'escada') => '#A45C44',
-        str_contains($componentId, 'fechamento') => '#1693D1',
-        default => '#4C5E73',
-    };
+    if (str_contains($componentId, 'grid') || str_contains($componentId, 'portico') || str_contains($componentId, 'trelica')) {
+        return '#2F3A48';
+    }
+    if (str_contains($componentId, 'piso') || str_contains($componentId, 'rampa')) {
+        return '#C8A88F';
+    }
+    if (str_contains($componentId, 'escada') || str_contains($componentId, 'fachada')) {
+        return '#A45C44';
+    }
+    if (str_contains($componentId, 'fechamento')) {
+        return '#1693D1';
+    }
+
+    return '#4C5E73';
 }
-
-
-
-
 

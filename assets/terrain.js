@@ -91,6 +91,8 @@
         elements.selectedX = document.getElementById('terrainSelectedX');
         elements.selectedY = document.getElementById('terrainSelectedY');
         elements.selectedRotation = document.getElementById('terrainSelectedRotation');
+        elements.invertItem = document.getElementById('terrainInvertItem');
+        elements.rotate30Item = document.getElementById('terrainRotate30Item');
         elements.duplicateItem = document.getElementById('terrainDuplicateItem');
         elements.deleteItem = document.getElementById('terrainDeleteItem');
         elements.status = document.getElementById('terrainStatus');
@@ -127,6 +129,8 @@
             input.addEventListener('change', () => updateSelectedItemFromInputs(true));
             input.addEventListener('blur', () => updateSelectedItemFromInputs(true));
         });
+        elements.invertItem.addEventListener('click', invertSelectedItem);
+        elements.rotate30Item.addEventListener('click', () => rotateSelectedItemBy(30));
         elements.duplicateItem.addEventListener('click', duplicateSelectedItem);
         elements.deleteItem.addEventListener('click', deleteSelectedItem);
         window.addEventListener('pointermove', handlePointerMove);
@@ -382,6 +386,7 @@
                     y: item.yM,
                     zIndex: item.zIndex,
                     rotationDeg: item.rotationDeg,
+                    flipX: Boolean(item.flipX),
                 })),
                 stats: bounds ? {
                     minX: bounds.minX,
@@ -480,6 +485,7 @@
             xM: roundNumber(Math.max(0, Number(item.x || 0)), 2),
             yM: roundNumber(Math.max(0, Number(item.y || 0)), 2),
             rotationDeg: normalizeRotation(Number(item.rotationDeg || 0)),
+            flipX: Boolean(item.flipX),
             zIndex: Math.max(1, Number(item.zIndex || 1)),
         };
     }
@@ -593,6 +599,9 @@
             'data-item-id': item.id,
             transform: `translate(${toPx(item.xM)} ${toPx(item.yM)}) rotate(${item.rotationDeg} ${widthPx / 2} ${heightPx / 2})`,
         });
+        const shapeGroup = svgElement('g', item.flipX ? {
+            transform: `translate(${widthPx} 0) scale(-1 1)`,
+        } : {});
 
         if (isSelected) {
             group.appendChild(svgElement('rect', {
@@ -608,17 +617,24 @@
             group.appendChild(createRotateHandle(widthPx));
         }
 
-        if (item.type === 'stage') {
-            drawStage(group, widthPx, heightPx);
+        if (item.type === 'stage' || item.type === 'main_stage') {
+            drawStage(shapeGroup, widthPx, heightPx);
         } else if (item.type === 'stair') {
-            drawStair(group, widthPx, heightPx);
+            drawStair(shapeGroup, widthPx, heightPx);
         } else if (item.type === 'ramp') {
-            drawRamp(group, widthPx, heightPx);
+            drawRamp(shapeGroup, widthPx, heightPx);
         } else if (item.type === 'landing') {
-            drawLanding(group, widthPx, heightPx);
+            drawLanding(shapeGroup, widthPx, heightPx);
+        } else if (item.type === 'screen_tower') {
+            drawScreenTower(shapeGroup, widthPx, heightPx);
+        } else if (item.type === 'connector') {
+            drawConnector(shapeGroup, widthPx, heightPx);
+        } else if (item.type === 'dimension_line') {
+            drawDimensionGuide(shapeGroup, widthPx, heightPx);
         } else {
-            drawWall(group, widthPx, heightPx);
+            drawWall(shapeGroup, widthPx, heightPx);
         }
+        group.appendChild(shapeGroup);
 
         if (view.showNames) {
             group.appendChild(svgText(item.label || getDefaultLabel(item.type), {
@@ -672,6 +688,28 @@
             const x = (widthPx / patternCount) * index;
             group.appendChild(svgElement('line', { x1: x, y1: 0, x2: x - 10, y2: heightPx, class: 'terrain-wall-line' }));
         }
+    }
+
+    function drawScreenTower(group, widthPx, heightPx) {
+        drawStage(group, widthPx, heightPx);
+        const midY = heightPx * 0.52;
+        group.appendChild(svgElement('line', { x1: 0, y1: midY, x2: widthPx, y2: midY, class: 'terrain-shape-line terrain-shape-line--heavy' }));
+        group.appendChild(svgElement('line', { x1: widthPx * 0.12, y1: 0, x2: widthPx * 0.12, y2: heightPx, class: 'terrain-shape-line' }));
+        group.appendChild(svgElement('line', { x1: widthPx * 0.88, y1: 0, x2: widthPx * 0.88, y2: heightPx, class: 'terrain-shape-line' }));
+        group.appendChild(svgText('TELAO', { x: widthPx / 2, y: Math.max(15, heightPx * 0.23), class: 'terrain-inner-text' }));
+    }
+
+    function drawConnector(group, widthPx, heightPx) {
+        group.appendChild(svgElement('rect', { x: 0, y: heightPx * 0.35, width: widthPx, height: Math.max(4, heightPx * 0.3), rx: 1, ry: 1, class: 'terrain-connector-base' }));
+        group.appendChild(svgElement('line', { x1: 0, y1: heightPx * 0.35, x2: widthPx, y2: heightPx * 0.35, class: 'terrain-shape-line' }));
+        group.appendChild(svgElement('line', { x1: 0, y1: heightPx * 0.65, x2: widthPx, y2: heightPx * 0.65, class: 'terrain-shape-line' }));
+    }
+
+    function drawDimensionGuide(group, widthPx, heightPx) {
+        const y = heightPx / 2;
+        group.appendChild(svgElement('line', { x1: 0, y1: y, x2: widthPx, y2: y, class: 'terrain-dimension-guide' }));
+        group.appendChild(svgElement('line', { x1: 0, y1: y - 8, x2: 0, y2: y + 8, class: 'terrain-dimension-guide' }));
+        group.appendChild(svgElement('line', { x1: widthPx, y1: y - 8, x2: widthPx, y2: y + 8, class: 'terrain-dimension-guide' }));
     }
 
     function createResizeHandles(widthPx, heightPx) {
@@ -759,6 +797,7 @@
             xM: roundNumber(xM, 2),
             yM: roundNumber(yM, 2),
             rotationDeg: 0,
+            flipX: false,
             zIndex: state.zCounter++,
         };
         const position = clampItemPosition(item, item.xM, item.yM);
@@ -893,6 +932,28 @@
         renderWorkspace();
         renderSelection();
         setStatus('Elemento duplicado no terreno.', 'success');
+    }
+
+    function invertSelectedItem() {
+        const item = getSelectedItem();
+        if (!item) {
+            return;
+        }
+        item.flipX = !item.flipX;
+        renderWorkspace();
+        renderSelection();
+        setStatus(`Elemento ${item.flipX ? 'invertido' : 'desinvertido'} na horizontal.`, 'success');
+    }
+
+    function rotateSelectedItemBy(deltaDeg) {
+        const item = getSelectedItem();
+        if (!item) {
+            return;
+        }
+        item.rotationDeg = normalizeRotation(item.rotationDeg + Number(deltaDeg || 0));
+        renderWorkspace();
+        renderSelection();
+        setStatus(`Elemento girado para ${formatInputNumber(item.rotationDeg)} graus.`, 'success');
     }
 
     function deleteSelectedItem() {
@@ -1055,9 +1116,13 @@
     function getTerrainComponents() {
         return [
             { id: 'stage', name: 'Retangulo de palco', defaultLabel: 'PALCO', widthM: 10, heightM: 6, category: 'Estruturas' },
+            { id: 'main_stage', name: 'Palco principal tecnico', defaultLabel: 'PALCO PRINCIPAL', widthM: 30, heightM: 6, category: 'Estruturas' },
             { id: 'stair', name: 'Escada', defaultLabel: 'ESCADA', widthM: 1.8, heightM: 2, category: 'Acessos' },
             { id: 'ramp', name: 'Rampa 30%', defaultLabel: 'RAMPA 30%', widthM: 4, heightM: 1.8, category: 'Acessos' },
             { id: 'landing', name: 'Patamar', defaultLabel: 'PATAMAR', widthM: 1.4, heightM: 1, category: 'Acessos' },
+            { id: 'connector', name: 'Ligacao/passarela', defaultLabel: 'LIGACAO', widthM: 3, heightM: 0.45, category: 'Acessos' },
+            { id: 'screen_tower', name: 'Telao em planta', defaultLabel: 'TELAO PARA TRANSMISSAO', widthM: 4, heightM: 6, category: 'Estruturas' },
+            { id: 'dimension_line', name: 'Linha de cota auxiliar', defaultLabel: 'COTA', widthM: 10, heightM: 0.2, category: 'Anotacoes' },
             { id: 'wall_2m', name: 'Parede 2 m', defaultLabel: 'PAREDE 2 m', widthM: 2, heightM: 0.2, category: 'Fechamentos' },
             { id: 'wall_3m', name: 'Parede 3 m', defaultLabel: 'PAREDE 3 m', widthM: 3, heightM: 0.2, category: 'Fechamentos' },
         ];
@@ -1067,6 +1132,9 @@
         if (component.id === 'stage') {
             return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="14" y="18" width="92" height="44" rx="3" ry="3" class="terrain-preview__outline"></rect><text x="60" y="13" class="terrain-preview__text">PALCO</text></svg>';
         }
+        if (component.id === 'main_stage') {
+            return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="8" y="28" width="104" height="24" rx="2" ry="2" class="terrain-preview__outline"></rect><text x="60" y="20" class="terrain-preview__text terrain-preview__text--small">PALCO PRINCIPAL</text></svg>';
+        }
         if (component.id === 'stair') {
             return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="36" y="10" width="48" height="58" rx="3" ry="3" class="terrain-preview__outline"></rect><line x1="71" y1="10" x2="71" y2="68" class="terrain-preview__line"></line><line x1="36" y1="19" x2="84" y2="19" class="terrain-preview__line"></line><line x1="36" y1="28" x2="84" y2="28" class="terrain-preview__line"></line><line x1="36" y1="37" x2="84" y2="37" class="terrain-preview__line"></line><line x1="36" y1="46" x2="84" y2="46" class="terrain-preview__line"></line><line x1="36" y1="55" x2="84" y2="55" class="terrain-preview__line"></line><text x="60" y="76" class="terrain-preview__text terrain-preview__text--small">ESCADA</text></svg>';
         }
@@ -1075,6 +1143,15 @@
         }
         if (component.id === 'landing') {
             return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="20" y="26" width="80" height="28" rx="3" ry="3" class="terrain-preview__outline"></rect><line x1="47" y1="26" x2="47" y2="54" class="terrain-preview__line"></line><line x1="73" y1="26" x2="73" y2="54" class="terrain-preview__line"></line><text x="60" y="20" class="terrain-preview__text terrain-preview__text--small">PATAMAR</text></svg>';
+        }
+        if (component.id === 'connector') {
+            return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="8" y="36" width="104" height="8" rx="1" ry="1" class="terrain-preview__outline"></rect><text x="60" y="28" class="terrain-preview__text terrain-preview__text--small">LIGACAO</text></svg>';
+        }
+        if (component.id === 'screen_tower') {
+            return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="42" y="8" width="36" height="62" rx="2" ry="2" class="terrain-preview__outline"></rect><line x1="42" y1="41" x2="78" y2="41" class="terrain-preview__line"></line><text x="60" y="76" class="terrain-preview__text terrain-preview__text--small">TELAO</text></svg>';
+        }
+        if (component.id === 'dimension_line') {
+            return '<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><line x1="14" y1="40" x2="106" y2="40" class="terrain-preview__line"></line><line x1="14" y1="31" x2="14" y2="49" class="terrain-preview__line"></line><line x1="106" y1="31" x2="106" y2="49" class="terrain-preview__line"></line><text x="60" y="29" class="terrain-preview__text terrain-preview__text--small">COTA</text></svg>';
         }
         return `<svg viewBox="0 0 120 80" class="terrain-preview" aria-hidden="true"><rect x="14" y="33" width="92" height="12" rx="3" ry="3" class="terrain-preview__wall"></rect><text x="60" y="24" class="terrain-preview__text terrain-preview__text--small">${escapeHtml(component.defaultLabel)}</text></svg>`;
     }

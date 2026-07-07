@@ -47,7 +47,34 @@ function initMoreMenu() {
     });
 }
 
+function initCollapsiblePanels() {
+    document.querySelectorAll('.panel').forEach((panel, index) => {
+        const heading = panel.querySelector(':scope > .panel-heading, :scope > .workspace-head');
+        if (!heading || heading.querySelector('.panel-collapse-btn')) return;
+
+        const content = [...panel.children].filter((child) => child !== heading);
+        if (content.length === 0) return;
+
+        const title = heading.querySelector('h2');
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'panel-collapse-btn';
+        button.setAttribute('aria-expanded', 'true');
+        button.setAttribute('aria-label', `Minimizar painel ${title ? title.textContent.trim() : index + 1}`);
+        button.innerHTML = '<span></span><span></span>';
+
+        button.addEventListener('click', () => {
+            const collapsed = panel.classList.toggle('panel--collapsed');
+            button.setAttribute('aria-expanded', String(!collapsed));
+            button.setAttribute('aria-label', `${collapsed ? 'Expandir' : 'Minimizar'} painel ${title ? title.textContent.trim() : index + 1}`);
+        });
+
+        heading.appendChild(button);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     markActiveNav();
     initMoreMenu();
+    initCollapsiblePanels();
 });

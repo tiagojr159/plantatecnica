@@ -51,7 +51,7 @@
             'riggingNewBtn','riggingSaveBtn','riggingApplyCanvas','riggingProjectList','riggingStatus','riggingSelectionEmpty','riggingSelectionForm',
             'riggingSelectedName','riggingSelectedWidth','riggingSelectedHeight','riggingSelectedDepth','riggingSelectedX','riggingSelectedY','riggingWidthLabel','riggingHeightLabel','riggingDepthLabel','riggingDimensionHint',
             'riggingSelectedZ','riggingSelectedMountMode','riggingZUp50','riggingZDown50','riggingSelectedRotationX','riggingSelectedRotationY','riggingSelectedRotationZ','riggingSelectedColor',
-            'riggingDuplicateBtn','riggingDeleteBtn','riggingViewIso','riggingViewFront','riggingViewSide','riggingViewTop',
+            'riggingDuplicateBtn','riggingDeleteBtn','riggingInvertBtn','riggingRotate30Btn','riggingViewIso','riggingViewFront','riggingViewSide','riggingViewTop',
             'riggingRotateLeftBtn','riggingRotateRightBtn','riggingLibraryToggle','riggingEditToggle','riggingLibraryDock','riggingEditDock','riggingZoomPreset','riggingPreviewWrap','riggingFullscreenBtn'
         ].forEach((id) => { el[id] = document.getElementById(id); });
     }
@@ -89,6 +89,8 @@
         el.riggingSelectedMountMode.addEventListener('change', () => updateSelected(true));
         el.riggingDuplicateBtn.addEventListener('click', duplicateSelected);
         el.riggingDeleteBtn.addEventListener('click', deleteSelected);
+        el.riggingInvertBtn.addEventListener('click', () => rotateSelectedBy(180));
+        el.riggingRotate30Btn.addEventListener('click', () => rotateSelectedBy(30));
         el.riggingRotateLeftBtn.addEventListener('click', () => rotateSelectedBy(-15));
         el.riggingRotateRightBtn.addEventListener('click', () => rotateSelectedBy(15));
         el.riggingZUp50.addEventListener('click', () => nudgeSelectedZ(0.5));
@@ -1320,7 +1322,6 @@
         return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
     }
 })();
-
 
 
 

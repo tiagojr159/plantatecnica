@@ -163,6 +163,51 @@ code {
     margin-bottom: 1rem;
 }
 
+.panel-heading--toolbar {
+    margin-bottom: 1.25rem;
+}
+
+.panel-heading,
+.workspace-head {
+    position: relative;
+}
+
+.panel-collapse-btn {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel-muted);
+    color: var(--text);
+    cursor: pointer;
+    flex: 0 0 auto;
+}
+
+.panel-collapse-btn span {
+    position: absolute;
+    width: 0.7rem;
+    height: 2px;
+    background: currentColor;
+    border-radius: 999px;
+    transition: transform 0.2s ease;
+}
+
+.panel-collapse-btn span:last-child {
+    transform: rotate(90deg);
+}
+
+.panel--collapsed .panel-collapse-btn span:last-child {
+    transform: rotate(0deg);
+}
+
+.panel--collapsed > :not(.panel-heading):not(.workspace-head) {
+    display: none !important;
+}
+
 .panel,
 .toolbar-panel {
     padding: 1rem;
@@ -236,6 +281,14 @@ h2 {
 
 .toolbar-row--compact {
     align-items: stretch;
+}
+
+.toolbar-row--legend {
+    align-items: center;
+}
+
+.toolbar-row--legend .legend-toggle-group {
+    justify-content: flex-end;
 }
 
 .toolbar-group {
@@ -479,6 +532,15 @@ h2 {
 
 .canvas-item.is-dragging {
     cursor: grabbing;
+}
+
+.selection-marquee {
+    position: absolute;
+    border: 1px dashed #2563eb;
+    background: rgba(37, 99, 235, 0.12);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    pointer-events: none;
+    z-index: 10000;
 }
 
 .canvas-item img {
@@ -892,6 +954,23 @@ h2 {
     stroke-linejoin: round;
 }
 
+.terrain-shape-line--heavy {
+    stroke-width: 2.4;
+}
+
+.terrain-connector-base {
+    fill: rgba(203, 213, 225, 0.42);
+    stroke: #111827;
+    stroke-width: 1.2;
+}
+
+.terrain-dimension-guide {
+    fill: none;
+    stroke: #c2410c;
+    stroke-width: 1.2;
+    stroke-linecap: square;
+}
+
 .terrain-label,
 .terrain-inner-text,
 .terrain-dimension-text,
@@ -1031,22 +1110,22 @@ h2 {
     z-index: 2;
 }
 
-.canvas-resize-handle--nw {
-    left: -6px;
-    top: -6px;
-    cursor: nwse-resize;
+.canvas-resize-strip {
+    position: absolute;
+    top: 50%;
+    width: 28px;
+    height: 40px;
+    transform: translateY(-50%);
+    cursor: ew-resize;
+    z-index: 1;
 }
 
-.canvas-resize-handle--ne {
-    right: -6px;
-    top: -6px;
-    cursor: nesw-resize;
+.canvas-resize-strip--w {
+    left: -18px;
 }
 
-.canvas-resize-handle--se {
-    right: -6px;
-    bottom: -6px;
-    cursor: nwse-resize;
+.canvas-resize-strip--e {
+    right: -18px;
 }
 
 .canvas-resize-handle--s {
@@ -1056,15 +1135,11 @@ h2 {
     cursor: ns-resize;
 }
 
-.canvas-resize-handle--sw {
-    left: -6px;
-    bottom: -6px;
-    cursor: nesw-resize;
-}
-
 .canvas-resize-handle--w {
     left: -6px;
     top: 50%;
+    width: 16px;
+    height: 32px;
     transform: translateY(-50%);
     cursor: ew-resize;
 }
@@ -1079,6 +1154,8 @@ h2 {
 .canvas-resize-handle--e {
     right: -6px;
     top: 50%;
+    width: 16px;
+    height: 32px;
     transform: translateY(-50%);
     cursor: ew-resize;
 }
@@ -1359,14 +1436,42 @@ h2 {
     filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.14));
 }
 
+.export-tech-fallback {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font: 700 0.62rem "Courier New", monospace;
+    color: #334155;
+    text-align: center;
+    padding: 0.2rem;
+}
+
 .export-tech-item .item-title {
-    top: -1.2rem;
-    font-size: 0.68rem;
+    bottom: calc(100% + var(--export-title-offset, 8px));
+    max-width: var(--export-title-max-width, 120px);
+    overflow: hidden;
+    padding: var(--export-badge-pad-y, 2px) var(--export-badge-pad-x, 4px);
+    font-size: var(--export-label-font, 0.68rem);
+    line-height: 1.05;
+    text-overflow: ellipsis;
 }
 
 .export-tech-item .dimension-badge {
-    font-size: 0.62rem;
-    padding: 0.18rem 0.38rem;
+    padding: var(--export-badge-pad-y, 2px) var(--export-badge-pad-x, 4px);
+    font-size: var(--export-badge-font, 0.62rem);
+    line-height: 1.05;
+    box-shadow: none;
+}
+
+.export-tech-item .dimension-badge--height {
+    left: calc(var(--export-badge-offset, 6px) * -1);
+    top: var(--export-badge-offset, 6px);
+}
+
+.export-tech-item .dimension-badge--width {
+    bottom: calc(var(--export-badge-offset, 6px) * -1);
 }
 
 .export-structure-bounds {
@@ -1380,7 +1485,11 @@ h2 {
 }
 
 .export-terrain-label {
-    font-size: 10px;
+    font-size: 8px;
+}
+
+.export-terrain-dimension {
+    font-size: 7px;
 }
 
 .export-empty-state {

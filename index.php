@@ -48,6 +48,12 @@ declare(strict_types=1);
 
             <main class="main-column">
                 <section class="panel toolbar-panel">
+                    <div class="panel-heading panel-heading--toolbar">
+                        <div>
+                            <p class="eyebrow">Projeto</p>
+                            <h2>Monte estruturas, veja dimensoes e salve os projetos.</h2>
+                        </div>
+                    </div>
                     <div class="toolbar-row">
                         <div class="toolbar-group toolbar-group--grow">
                             <label class="field">
@@ -93,6 +99,22 @@ declare(strict_types=1);
                             </div>
                         </div>
                     </div>
+
+                    <div class="toolbar-row toolbar-row--legend">
+                        <div class="toolbar-group toolbar-group--grow">
+                            <p class="panel-help">Controle as legendas exibidas na planta tecnica.</p>
+                        </div>
+                        <div class="legend-toggle-group" aria-label="Opcoes de legenda">
+                            <label class="toggle-chip">
+                                <input id="toggleDimensions" type="checkbox" checked>
+                                <span>Mostrar dimensoes</span>
+                            </label>
+                            <label class="toggle-chip">
+                                <input id="toggleNames" type="checkbox" checked>
+                                <span>Mostrar nomes</span>
+                            </label>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="panel workspace-panel">
@@ -102,17 +124,7 @@ declare(strict_types=1);
                             <h2>Planta tecnica</h2>
                         </div>
                         <div class="workspace-head__controls">
-                            <p class="panel-help">Clique e arraste para reposicionar. A area pode crescer bastante na horizontal e voce pode navegar pelo scroll lateral.</p>
-                            <div class="legend-toggle-group" aria-label="Opcoes de legenda">
-                                <label class="toggle-chip">
-                                    <input id="toggleDimensions" type="checkbox" checked>
-                                    <span>Monte estruturas, veja dimensoes e salve os projetos.</span>
-                                </label>
-                                <label class="toggle-chip">
-                                    <input id="toggleNames" type="checkbox" checked>
-                                    <span>Monte estruturas, veja dimensoes e salve os projetos.</span>
-                                </label>
-                            </div>
+                            <p class="panel-help">Clique e arraste para reposicionar. </p>
                         </div>
                     </div>
                     <div class="workspace-scroll">
@@ -163,6 +175,10 @@ declare(strict_types=1);
                             <span>Monte estruturas, veja dimensoes e salve os projetos.</span>
                             <input id="selectedRotation" type="number" step="1" value="0">
                         </label>
+                        <div class="action-row action-row--compact">
+                            <button id="invertItemBtn" type="button" class="secondary-btn">Inverter peca</button>
+                            <button id="rotate30ItemBtn" type="button" class="secondary-btn">Girar 30deg</button>
+                        </div>
                         <div class="action-row">
                             <button id="duplicateItemBtn" type="button" class="secondary-btn">Duplicar</button>
                             <button id="deleteItemBtn" type="button" class="danger-btn">Remover</button>
@@ -200,17 +216,14 @@ declare(strict_types=1);
             defaultCanvasWidthM: 30,
             defaultCanvasHeightM: 8,
             scalePxPerMeter: 90,
-            snapStepM: 0.1
+            snapStepM: 0.1,
+            assetVersion: '<?php echo time(); ?>'
         };
     </script>
     <script src="assets/nav.js" defer></script>
     <script src="assets/app.js" defer></script>
 </body>
 </html>
-
-
-
-
 
 
 

@@ -6,6 +6,8 @@ const state = {
     projects: [],
     items: [],
     selectedItemId: null,
+    selectedItemIds: [],
+    clipboardItems: [],
     dragState: null,
     skipNextWorkspaceClick: 0,
     minSizeM: 0.2,
@@ -67,6 +69,8 @@ function cacheElements() {
     elements.selectedX = document.getElementById('selectedX');
     elements.selectedY = document.getElementById('selectedY');
     elements.selectedRotation = document.getElementById('selectedRotation');
+    elements.invertItemBtn = document.getElementById('invertItemBtn');
+    elements.rotate30ItemBtn = document.getElementById('rotate30ItemBtn');
     elements.duplicateItemBtn = document.getElementById('duplicateItemBtn');
     elements.deleteItemBtn = document.getElementById('deleteItemBtn');
 }
@@ -94,11 +98,13 @@ function bindEvents() {
         input.addEventListener('change', () => updateSelectedItemFromInputs(true));
         input.addEventListener('blur', () => updateSelectedItemFromInputs(true));
     });
+    elements.invertItemBtn.addEventListener('click', invertSelectedItem);
+    elements.rotate30ItemBtn.addEventListener('click', () => rotateSelectedItemBy(30));
     elements.duplicateItemBtn.addEventListener('click', duplicateSelectedItem);
     elements.deleteItemBtn.addEventListener('click', deleteSelectedItem);
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerup', stopDraggingItem);
-    window.addEventListener('keydown', handleKeyboardShortcuts);
+    document.addEventListener('keydown', handleKeyboardShortcuts, true);
 }
 
 async function initializeApplication() {
@@ -140,6 +146,7 @@ function createNewProject(showStatus = true) {
     };
     state.items = [];
     state.selectedItemId = null;
+    state.selectedItemIds = [];
     state.dragState = null;
     state.zCounter = 1;
     syncProjectInputs();
@@ -159,7 +166,7 @@ async function loadComponents() {
     state.components = components.map((component) => ({
         id: String(component.id || ''),
         name: String(component.name || 'Componente'),
-        image: String(component.image || ''),
+        image: versionedAssetUrl(String(component.image || '')),
         widthM: roundTo(Number(component.widthM || 1), 2),
         heightM: roundTo(Number(component.heightM || 1), 2),
         category: String(component.category || 'Outros'),
@@ -201,7 +208,7 @@ function renderCatalog() {
         button.dataset.componentId = component.id;
         button.innerHTML = `
             <div class="catalog-thumb">
-                <img src="${component.image}" alt="${escapeHtml(component.name)}">
+                <img src="${versionedAssetUrl(component.image)}" alt="${escapeHtml(component.name)}">
             </div>
             <div class="catalog-meta">
                 <strong>${escapeHtml(component.name)}</strong>
@@ -234,8 +241,8 @@ function renderWorkspace() {
     const fragment = document.createDocumentFragment();
 
     sortedItems.forEach((item) => {
-        const isSelected = item.id === state.selectedItemId;
-        const isDragging = state.dragState && state.dragState.itemId === item.id;
+        const isSelected = isItemSelected(item.id);
+        const isDragging = state.dragState && (state.dragState.itemId === item.id || (state.dragState.itemIds || []).includes(item.id));
         const node = document.createElement('div');
         node.className = `canvas-item${isSelected ? ' is-selected' : ''}${isDragging ? ' is-dragging' : ''}`;
         node.dataset.itemId = item.id;
@@ -246,25 +253,40 @@ function renderWorkspace() {
         node.style.zIndex = String(item.zIndex);
         node.style.transform = `rotate(${item.rotationDeg || 0}deg)`;
         node.style.transformOrigin = 'center center';
-        node.innerHTML =             `<img src="${item.image}" alt="${escapeHtml(item.name)}">            ${showNames ? `<span class="item-title">${escapeHtml(item.name)}</span>` : ''}            ${showDimensions ? `<span class="dimension-badge dimension-badge--height">A ${formatMeters(item.heightM)}</span><span class="dimension-badge dimension-badge--width">L ${formatMeters(item.widthM)}</span>` : ''}            ${isSelected ? createCanvasControls() : ''}`;
+        node.innerHTML =             `<img src="${versionedAssetUrl(item.image)}" alt="${escapeHtml(item.name)}"${item.flipX ? ' style="transform: scaleX(-1);"' : ''}>            ${showNames ? `<span class="item-title">${escapeHtml(item.name)}</span>` : ''}            ${showDimensions ? `<span class="dimension-badge dimension-badge--height">A ${formatMeters(item.heightM)}</span><span class="dimension-badge dimension-badge--width">L ${formatMeters(item.widthM)}</span>` : ''}            ${isSelected && getSelectedItems().length === 1 ? createCanvasControls() : ''}`;
         fragment.appendChild(node);
     });
 
     elements.workspace.appendChild(fragment);
+    if (state.dragState && state.dragState.mode === 'marquee') {
+        elements.workspace.appendChild(createMarqueeOverlay(state.dragState));
+    }
     updateMetrics(bounds);
+}
+
+function createMarqueeOverlay(dragState) {
+    const minX = Math.min(dragState.startX, dragState.currentX);
+    const minY = Math.min(dragState.startY, dragState.currentY);
+    const maxX = Math.max(dragState.startX, dragState.currentX);
+    const maxY = Math.max(dragState.startY, dragState.currentY);
+    const overlay = document.createElement('div');
+    overlay.className = 'selection-marquee';
+    overlay.style.left = `${minX * state.scalePxPerMeter}px`;
+    overlay.style.bottom = `${minY * state.scalePxPerMeter}px`;
+    overlay.style.width = `${Math.max(0, maxX - minX) * state.scalePxPerMeter}px`;
+    overlay.style.height = `${Math.max(0, maxY - minY) * state.scalePxPerMeter}px`;
+    return overlay;
 }
 
 function createCanvasControls() {
     return [
-        'nw',
         'n',
-        'ne',
         'e',
-        'se',
         's',
-        'sw',
         'w',
     ].map((handle) => '<span class=\"canvas-resize-handle canvas-resize-handle--' + handle + '\" data-resize-handle=\"' + handle + '\"></span>').join('')
+        + '<span class="canvas-resize-strip canvas-resize-strip--w" data-resize-handle="w"></span>'
+        + '<span class="canvas-resize-strip canvas-resize-strip--e" data-resize-handle="e"></span>'
         + '<span class="canvas-rotate-link"></span>'
         + '<span class="canvas-rotate-handle" data-rotate-handle="true"></span>';
 }
@@ -284,12 +306,18 @@ function createBoundsOverlay(bounds) {
 }
 
 function renderSelection() {
-    const item = getSelectedItem();
+    const selectedItems = getSelectedItems();
+    const item = selectedItems.length === 1 ? selectedItems[0] : null;
     const hasSelection = Boolean(item);
     elements.selectionEmpty.hidden = hasSelection;
     elements.selectionForm.hidden = !hasSelection;
 
     if (!item) {
+        if (selectedItems.length > 1) {
+            elements.selectionEmpty.textContent = `${selectedItems.length} pecas selecionadas. Arraste uma delas para mover o grupo, use Ctrl+C/Ctrl+V para copiar e colar, ou Delete para apagar.`;
+        } else {
+            elements.selectionEmpty.textContent = 'Selecione uma peca na planta para ajustar a posicao e duplicar ou remover.';
+        }
         return;
     }
 
@@ -381,8 +409,25 @@ function handleWorkspaceDrop(event) {
 }
 
 function handleWorkspacePointerDown(event) {
+    if (event.button !== 0) {
+        return;
+    }
+
     const itemNode = event.target.closest('[data-item-id]');
     if (!itemNode) {
+        const pointerPoint = convertPointerToCanvasPoint(event.clientX, event.clientY, false);
+        state.dragState = {
+            mode: 'marquee',
+            startX: pointerPoint.x,
+            startY: pointerPoint.y,
+            currentX: pointerPoint.x,
+            currentY: pointerPoint.y,
+            additive: event.shiftKey || event.ctrlKey || event.metaKey,
+            initialIds: [...state.selectedItemIds],
+        };
+        state.skipNextWorkspaceClick = Date.now() + 250;
+        renderWorkspace();
+        event.preventDefault();
         return;
     }
 
@@ -391,24 +436,30 @@ function handleWorkspacePointerDown(event) {
         return;
     }
 
-    state.selectedItemId = item.id;
-    item.zIndex = ++state.zCounter;
-    state.skipNextWorkspaceClick = Date.now() + 250;
-
     const resizeHandle = event.target.closest('[data-resize-handle]');
-    if (resizeHandle) {
-        state.dragState = createResizeDragState(item, resizeHandle.dataset.resizeHandle || 'se');
+    const rotateHandle = event.target.closest('[data-rotate-handle]');
+    const alreadySelected = isItemSelected(item.id);
+    if ((resizeHandle || rotateHandle) && !alreadySelected) {
+        selectOnly(item.id);
+    }
+
+    const selectedItemsForControl = getSelectedItems();
+    if (resizeHandle && selectedItemsForControl.length === 1) {
+        selectedItemsForControl[0].zIndex = ++state.zCounter;
+        state.skipNextWorkspaceClick = Date.now() + 250;
+        state.dragState = createResizeDragState(selectedItemsForControl[0], resizeHandle.dataset.resizeHandle || 'se');
         renderWorkspace();
         renderSelection();
         event.preventDefault();
         return;
     }
 
-    const rotateHandle = event.target.closest('[data-rotate-handle]');
-    if (rotateHandle) {
+    if (rotateHandle && selectedItemsForControl.length === 1) {
+        selectedItemsForControl[0].zIndex = ++state.zCounter;
+        state.skipNextWorkspaceClick = Date.now() + 250;
         state.dragState = {
             mode: 'rotate',
-            itemId: item.id,
+            itemId: selectedItemsForControl[0].id,
         };
         renderWorkspace();
         renderSelection();
@@ -416,13 +467,38 @@ function handleWorkspacePointerDown(event) {
         return;
     }
 
+    if (event.shiftKey || event.ctrlKey || event.metaKey) {
+        toggleItemSelection(item.id);
+        state.skipNextWorkspaceClick = Date.now() + 250;
+        renderWorkspace();
+        renderSelection();
+        event.preventDefault();
+        return;
+    } else if (!alreadySelected) {
+        selectOnly(item.id);
+    }
+
+    const selectedItems = getSelectedItems();
+    selectedItems.forEach((selected) => { selected.zIndex = ++state.zCounter; });
+    state.skipNextWorkspaceClick = Date.now() + 250;
+
     const pointerPoint = convertPointerToCanvasPoint(event.clientX, event.clientY);
-    state.dragState = {
-        mode: 'move',
-        itemId: item.id,
-        offsetX: pointerPoint.x - item.x,
-        offsetY: pointerPoint.y - item.y,
-    };
+    if (selectedItems.length > 1 && isItemSelected(item.id)) {
+        state.dragState = {
+            mode: 'group-move',
+            itemIds: selectedItems.map((entry) => entry.id),
+            startX: pointerPoint.x,
+            startY: pointerPoint.y,
+            originalItems: selectedItems.map((entry) => ({ id: entry.id, x: entry.x, y: entry.y })),
+        };
+    } else {
+        state.dragState = {
+            mode: 'move',
+            itemId: item.id,
+            offsetX: pointerPoint.x - item.x,
+            offsetY: pointerPoint.y - item.y,
+        };
+    }
     renderWorkspace();
     renderSelection();
     event.preventDefault();
@@ -437,13 +513,17 @@ function handleWorkspaceClick(event) {
 
     const itemNode = event.target.closest('[data-item-id]');
     if (!itemNode) {
-        state.selectedItemId = null;
+        clearSelection();
         renderWorkspace();
         renderSelection();
         return;
     }
 
-    state.selectedItemId = itemNode.dataset.itemId || null;
+    if (event.shiftKey || event.ctrlKey || event.metaKey) {
+        toggleItemSelection(itemNode.dataset.itemId || '');
+    } else {
+        selectOnly(itemNode.dataset.itemId || '');
+    }
     const item = getSelectedItem();
     if (item) {
         item.zIndex = ++state.zCounter;
@@ -454,6 +534,21 @@ function handleWorkspaceClick(event) {
 
 function handlePointerMove(event) {
     if (!state.dragState) {
+        return;
+    }
+
+    if (state.dragState.mode === 'marquee') {
+        const pointerPoint = convertPointerToCanvasPoint(event.clientX, event.clientY, false);
+        state.dragState.currentX = pointerPoint.x;
+        state.dragState.currentY = pointerPoint.y;
+        renderWorkspace();
+        return;
+    }
+
+    if (state.dragState.mode === 'group-move') {
+        applyGroupMoveFromPointer(event.clientX, event.clientY);
+        renderWorkspace();
+        renderSelection();
         return;
     }
 
@@ -483,18 +578,34 @@ function stopDraggingItem() {
         return;
     }
 
+    if (state.dragState.mode === 'marquee') {
+        finishMarqueeSelection();
+    }
+
     state.dragState = null;
     renderWorkspace();
     renderSelection();
 }
 
 function handleKeyboardShortcuts(event) {
-    const activeTag = document.activeElement ? document.activeElement.tagName : '';
-    if (activeTag === 'INPUT' || activeTag === 'TEXTAREA') {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c' && getSelectedItems().length > 0) {
+        event.preventDefault();
+        copySelectedItems();
         return;
     }
 
-    if ((event.key === 'Delete' || event.key === 'Backspace') && state.selectedItemId) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v' && state.clipboardItems.length > 0) {
+        event.preventDefault();
+        pasteCopiedItems();
+        return;
+    }
+
+    if (isEditableShortcutTarget(event.target)) {
+        return;
+    }
+
+    if ((event.key === 'Delete' || event.key === 'Backspace') && getSelectedItems().length > 0) {
+        event.preventDefault();
         deleteSelectedItem();
     }
 }
@@ -515,7 +626,7 @@ function addComponentToCanvas(component, rawX, rawY) {
     item.y = position.y;
     item.zIndex = ++state.zCounter;
     state.items.push(item);
-    state.selectedItemId = item.id;
+    selectOnly(item.id);
     renderWorkspace();
     renderSelection();
 }
@@ -532,6 +643,7 @@ function createItemFromComponent(component) {
         x: 0,
         y: 0,
         rotationDeg: 0,
+        flipX: false,
         zIndex: state.zCounter + 1,
     };
 }
@@ -639,6 +751,171 @@ function getSelectedItem() {
     return state.items.find((item) => item.id === state.selectedItemId) || null;
 }
 
+function getSelectedItems() {
+    const selectedIds = new Set(state.selectedItemIds || []);
+    return state.items.filter((item) => selectedIds.has(item.id));
+}
+
+function isItemSelected(itemId) {
+    return (state.selectedItemIds || []).includes(itemId);
+}
+
+function selectOnly(itemId) {
+    if (!itemId) {
+        clearSelection();
+        return;
+    }
+    state.selectedItemId = itemId;
+    state.selectedItemIds = [itemId];
+}
+
+function clearSelection() {
+    state.selectedItemId = null;
+    state.selectedItemIds = [];
+}
+
+function toggleItemSelection(itemId) {
+    if (!itemId) {
+        return;
+    }
+    const current = new Set(state.selectedItemIds || []);
+    if (current.has(itemId)) {
+        current.delete(itemId);
+    } else {
+        current.add(itemId);
+    }
+    state.selectedItemIds = [...current];
+    state.selectedItemId = state.selectedItemIds[state.selectedItemIds.length - 1] || null;
+}
+
+function finishMarqueeSelection() {
+    const dragState = state.dragState;
+    const minX = Math.min(dragState.startX, dragState.currentX);
+    const minY = Math.min(dragState.startY, dragState.currentY);
+    const maxX = Math.max(dragState.startX, dragState.currentX);
+    const maxY = Math.max(dragState.startY, dragState.currentY);
+    const selectedIds = state.items
+        .filter((item) => rectsIntersect(getRotatedItemExtents(item), { minX, minY, maxX, maxY }))
+        .map((item) => item.id);
+
+    const merged = dragState.additive ? [...new Set([...(dragState.initialIds || []), ...selectedIds])] : selectedIds;
+    state.selectedItemIds = merged;
+    state.selectedItemId = merged[merged.length - 1] || null;
+
+    if (merged.length > 0) {
+        setStatus(`${merged.length} peca${merged.length === 1 ? '' : 's'} selecionada${merged.length === 1 ? '' : 's'}.`, 'info');
+    }
+}
+
+function rectsIntersect(first, second) {
+    return first.minX <= second.maxX
+        && first.maxX >= second.minX
+        && first.minY <= second.maxY
+        && first.maxY >= second.minY;
+}
+
+function applyGroupMoveFromPointer(clientX, clientY) {
+    const dragState = state.dragState;
+    const pointerPoint = convertPointerToCanvasPoint(clientX, clientY);
+    const rawDeltaX = snapValue(pointerPoint.x - dragState.startX, state.snapStepM);
+    const rawDeltaY = snapValue(pointerPoint.y - dragState.startY, state.snapStepM);
+    const delta = clampGroupDelta(dragState.originalItems, rawDeltaX, rawDeltaY);
+
+    dragState.originalItems.forEach((original) => {
+        const item = state.items.find((entry) => entry.id === original.id);
+        if (!item) {
+            return;
+        }
+        item.x = roundTo(original.x + delta.x, 2);
+        item.y = roundTo(original.y + delta.y, 2);
+    });
+}
+
+function clampGroupDelta(originalItems, deltaX, deltaY) {
+    let minDeltaX = Number.NEGATIVE_INFINITY;
+    let minDeltaY = Number.NEGATIVE_INFINITY;
+    let maxDeltaX = Number.POSITIVE_INFINITY;
+    let maxDeltaY = Number.POSITIVE_INFINITY;
+
+    originalItems.forEach((original) => {
+        const item = state.items.find((entry) => entry.id === original.id);
+        if (!item) {
+            return;
+        }
+        minDeltaX = Math.max(minDeltaX, -original.x);
+        minDeltaY = Math.max(minDeltaY, -original.y);
+        maxDeltaX = Math.min(maxDeltaX, state.project.canvas.widthM - item.widthM - original.x);
+        maxDeltaY = Math.min(maxDeltaY, state.project.canvas.heightM - item.heightM - original.y);
+    });
+
+    return {
+        x: roundTo(clamp(deltaX, minDeltaX, maxDeltaX), 2),
+        y: roundTo(clamp(deltaY, minDeltaY, maxDeltaY), 2),
+    };
+}
+
+function copySelectedItems() {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+        return;
+    }
+    state.clipboardItems = selectedItems.map((item) => ({ ...item }));
+    setStatus(`${selectedItems.length} peca${selectedItems.length === 1 ? '' : 's'} copiada${selectedItems.length === 1 ? '' : 's'}.`, 'success');
+}
+
+function pasteCopiedItems() {
+    if (!state.clipboardItems.length) {
+        return;
+    }
+
+    const bounds = calculateItemSetBounds(state.clipboardItems);
+    const offset = 0.4;
+    const pastedItems = state.clipboardItems.map((item) => {
+        const duplicate = {
+            ...item,
+            id: `item_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+            x: roundTo(item.x + offset, 2),
+            y: roundTo(item.y + offset, 2),
+            zIndex: ++state.zCounter,
+        };
+        duplicate.x = clamp(duplicate.x, 0, Math.max(0, state.project.canvas.widthM - duplicate.widthM));
+        duplicate.y = clamp(duplicate.y, 0, Math.max(0, state.project.canvas.heightM - duplicate.heightM));
+
+        if (bounds.maxX + offset > state.project.canvas.widthM) {
+            duplicate.x = roundTo(item.x - bounds.minX, 2);
+        }
+        if (bounds.maxY + offset > state.project.canvas.heightM) {
+            duplicate.y = roundTo(item.y - bounds.minY, 2);
+        }
+
+        return duplicate;
+    });
+
+    state.items.push(...pastedItems);
+    state.selectedItemIds = pastedItems.map((item) => item.id);
+    state.selectedItemId = state.selectedItemIds[state.selectedItemIds.length - 1] || null;
+    renderWorkspace();
+    renderSelection();
+    setStatus(`${pastedItems.length} peca${pastedItems.length === 1 ? '' : 's'} colada${pastedItems.length === 1 ? '' : 's'} na planta.`, 'success');
+}
+
+function calculateItemSetBounds(items) {
+    if (!items.length) {
+        return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
+    }
+    return items.reduce((bounds, item) => ({
+        minX: Math.min(bounds.minX, item.x),
+        minY: Math.min(bounds.minY, item.y),
+        maxX: Math.max(bounds.maxX, item.x + item.widthM),
+        maxY: Math.max(bounds.maxY, item.y + item.heightM),
+    }), {
+        minX: Number.POSITIVE_INFINITY,
+        minY: Number.POSITIVE_INFINITY,
+        maxX: Number.NEGATIVE_INFINITY,
+        maxY: Number.NEGATIVE_INFINITY,
+    });
+}
+
 function updateSelectedItemFromInputs(syncInputs = true) {
     const item = getSelectedItem();
     if (!item) {
@@ -667,38 +944,66 @@ function updateSelectedItemFromInputs(syncInputs = true) {
 }
 
 function duplicateSelectedItem() {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
+        return;
+    }
+
+    const duplicates = selectedItems.map((item) => {
+        const duplicate = {
+            ...item,
+            id: `item_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
+            rotationDeg: item.rotationDeg || 0,
+            zIndex: ++state.zCounter,
+        };
+        const position = clampAndSnapItem(duplicate, item.x + 0.3, item.y + 0.3);
+        duplicate.x = position.x;
+        duplicate.y = position.y;
+        return duplicate;
+    });
+
+    state.items.push(...duplicates);
+    state.selectedItemIds = duplicates.map((item) => item.id);
+    state.selectedItemId = state.selectedItemIds[state.selectedItemIds.length - 1] || null;
+    renderWorkspace();
+    renderSelection();
+    setStatus(`${duplicates.length} copia${duplicates.length === 1 ? '' : 's'} criada${duplicates.length === 1 ? '' : 's'}.`, 'success');
+}
+
+function invertSelectedItem() {
     const item = getSelectedItem();
     if (!item) {
         return;
     }
-
-    const duplicate = {
-        ...item,
-        id: `item_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`,
-        rotationDeg: item.rotationDeg || 0,
-        zIndex: state.zCounter + 1,
-    };
-    const position = clampAndSnapItem(duplicate, item.x + 0.3, item.y + 0.3);
-    duplicate.x = position.x;
-    duplicate.y = position.y;
-    state.items.push(duplicate);
-    state.selectedItemId = duplicate.id;
+    item.flipX = !item.flipX;
     renderWorkspace();
     renderSelection();
-    setStatus(`Copia de ${item.name} criada.`, 'success');
+    setStatus(`Peca ${item.flipX ? 'invertida' : 'desinvertida'} na horizontal.`, 'success');
+}
+
+function rotateSelectedItemBy(deltaDeg) {
+    const item = getSelectedItem();
+    if (!item) {
+        return;
+    }
+    item.rotationDeg = normalizeRotation(Number(item.rotationDeg || 0) + Number(deltaDeg || 0));
+    renderWorkspace();
+    renderSelection();
+    setStatus(`Peca girada para ${item.rotationDeg} graus.`, 'success');
 }
 
 function deleteSelectedItem() {
-    const item = getSelectedItem();
-    if (!item) {
+    const selectedItems = getSelectedItems();
+    if (selectedItems.length === 0) {
         return;
     }
 
-    state.items = state.items.filter((entry) => entry.id !== item.id);
-    state.selectedItemId = null;
+    const selectedIds = new Set(selectedItems.map((item) => item.id));
+    state.items = state.items.filter((entry) => !selectedIds.has(entry.id));
+    clearSelection();
     renderWorkspace();
     renderSelection();
-    setStatus(`Peca ${item.name} removida da planta.`, 'info');
+    setStatus(`${selectedItems.length} peca${selectedItems.length === 1 ? '' : 's'} removida${selectedItems.length === 1 ? '' : 's'} da planta.`, 'info');
 }
 
 function applyCanvasSizeFromInputs() {
@@ -767,6 +1072,7 @@ async function saveCurrentProject() {
                 y: item.y,
                 zIndex: item.zIndex,
                 rotationDeg: item.rotationDeg || 0,
+                flipX: Boolean(item.flipX),
             })),
         };
 
@@ -823,6 +1129,7 @@ async function openSavedProject(projectId) {
             item.y = position.y;
         });
         state.selectedItemId = null;
+        state.selectedItemIds = [];
         state.dragState = null;
         state.zCounter = state.items.reduce((highest, item) => Math.max(highest, item.zIndex || 1), 1);
         syncProjectInputs();
@@ -851,13 +1158,14 @@ function sanitizeLoadedItem(item) {
         id: String(item.id || `item_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`),
         componentId: String(item.componentId || ''),
         name: String(item.name || 'Componente'),
-        image: String(item.image || ''),
+        image: versionedAssetUrl(String(item.image || '')),
         widthM,
         heightM,
         x: roundTo(Math.max(0, Number(item.x || 0)), 2),
         y: roundTo(Math.max(0, Number(item.y || 0)), 2),
         zIndex: Math.max(1, Number(item.zIndex || 1)),
         rotationDeg: normalizeRotation(Number(item.rotationDeg || 0)),
+        flipX: Boolean(item.flipX),
     };
 }
 
@@ -934,10 +1242,10 @@ function buildResizeCandidate(item, handle, anchorHandle, anchorPoint, deltaLoca
         widthM = clamp(-deltaLocal.x, state.minSizeM, state.project.canvas.widthM);
     }
     if (handle.includes('n')) {
-        heightM = clamp(-deltaLocal.y, state.minSizeM, state.project.canvas.heightM);
+        heightM = clamp(deltaLocal.y, state.minSizeM, state.project.canvas.heightM);
     }
     if (handle.includes('s')) {
-        heightM = clamp(deltaLocal.y, state.minSizeM, state.project.canvas.heightM);
+        heightM = clamp(-deltaLocal.y, state.minSizeM, state.project.canvas.heightM);
     }
     if (handle === 'n' || handle === 's') {
         widthM = item.widthM;
@@ -1135,18 +1443,20 @@ function escapeHtml(value) {
         .replaceAll("'", '&#39;');
 }
 
+function isEditableShortcutTarget(target) {
+    return target instanceof HTMLElement
+        && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+function versionedAssetUrl(url) {
+    const cleanUrl = String(url || '').trim();
+    if (!cleanUrl) {
+        return '';
+    }
+    const version = String(appConfig.assetVersion || '').trim();
+    if (!version) {
+        return cleanUrl;
+    }
+    const separator = cleanUrl.includes('?') ? '&' : '?';
+    return `${cleanUrl}${separator}v=${encodeURIComponent(version)}`;
+}

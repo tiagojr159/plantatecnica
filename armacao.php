@@ -51,6 +51,12 @@ declare(strict_types=1);
 
             <main class="main-column rigging-main-column">
                 <section class="panel toolbar-panel">
+                    <div class="panel-heading panel-heading--toolbar">
+                        <div>
+                            <p class="eyebrow">Projeto</p>
+                            <h2>Monte a armacao, ajuste a base e salve os projetos.</h2>
+                        </div>
+                    </div>
                     <div class="toolbar-row">
                         <div class="toolbar-group toolbar-group--grow">
                             <label class="field">
@@ -259,6 +265,10 @@ declare(strict_types=1);
                             <button id="riggingRotateLeftBtn" type="button" class="secondary-btn">Girar -15deg</button>
                             <button id="riggingRotateRightBtn" type="button" class="secondary-btn">Girar +15deg</button>
                         </div>
+                        <div class="action-row action-row--compact">
+                            <button id="riggingInvertBtn" type="button" class="secondary-btn">Inverter peca</button>
+                            <button id="riggingRotate30Btn" type="button" class="secondary-btn">Girar 30deg</button>
+                        </div>
                         <label class="field">
                             <span>Cor da peca</span>
                             <input id="riggingSelectedColor" type="color" value="#3F4B5B">
@@ -307,8 +317,6 @@ declare(strict_types=1);
     <script src="assets/armacao.js" defer></script>
 </body>
 </html>
-
-
 
 
 
